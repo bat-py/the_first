@@ -57,10 +57,10 @@ def reply_keyboard_creator(buttons_list):
     return ready_buttons
 
 
-def main_menu_buttons(message):
+def main_menu_buttons(chat_id):
     feedback_count = 444
 
-    user_city = sql_handler.get_user_city(message.chat.id)
+    user_city = sql_handler.get_user_city(chat_id)
     # Если он еще не выбрал город из welcome сообщении
     if not user_city:
         product = 'Товары'
@@ -112,6 +112,7 @@ async def balance_menu(message, from_where):
     pass
 
 
+# /READY
 # Command "/start" handler
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
@@ -132,7 +133,7 @@ async def send_welcome(message: types.Message):
     await message.answer(bot_mesg['welcome'], parse_mode='html', reply_markup=gen_inline_keyboard_buttons)
 
     # Good luck and main menu reply keyboards
-    buttons = main_menu_buttons(message)
+    buttons = main_menu_buttons(message.chat.id)
     await message.answer('Удачных покупок!', reply_markup=buttons)
 
     # Если до этого получил 50р по реф. коду, тогда этого сообщения не будет
@@ -146,9 +147,11 @@ async def send_welcome(message: types.Message):
     await city_menu(message, 1)
 
 
+# /READY
 @dp.message_handler(lambda mesg: mesg.text == 'Локации')
 async def cities_menu(message: types.Message):
-    pass
+    # Sends message("Выберите город:") to member with InlineKeyboards
+    await city_menu(message, 2)
 
 
 @dp.message_handler(lambda mesg: mesg.text.startswith('Товары'))
@@ -184,8 +187,13 @@ async def balance_menu(message: types.Message):
 # City menu InlineKeyboardCreate handler
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('city'))
 async def callback_handler(callback_query: types.CallbackQuery):
+    # Если пользователь нажал на inline кнопку из welcome сообщении, тогда он сперва отправит "Выбор сохранен"
     if callback_query.data.startswith('city_welcome'):
-        await bot.send_message(callback_query.from_user.id, 'Выбор сохранен. Спасибо!')
+        ready_buttons = main_menu_buttons(callback_query.from_user.id)
+        await bot.send_message(callback_query.from_user.id,
+                               'Выбор сохранен. Спасибо!',
+                               reply_markup=ready_buttons
+                               )
     #await callback_query.answer('hello')
 
 
