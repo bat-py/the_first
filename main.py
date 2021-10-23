@@ -3,6 +3,7 @@ import aiogram.types
 from aiogram import Bot, Dispatcher, executor, types
 import json
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+import sql_handler
 
 API_TOKEN = '1018761895:AAE9zGMHZxYZlC_6kyRLAmTBC0Oubpp-QUQ'
 
@@ -20,16 +21,16 @@ with open('bot_messages.json', 'r', encoding='utf-8') as json_mesg:
 
 
 # Creates InlineKeyboardMarkup
-def inline_keyboard_creator(*args, row_width=2):
+def inline_keyboard_creator(buttons_list, row_width=2):
     """
     :param row_width: Columns count
-    :param args: You should give lists. Every list is one button. List's structure: [button_text, callback_data]
+    :param buttons_list: You should give lists. Every list is one button. List's structure: [button_text, callback_data]
     :return: Ready InlineKeyboardMarkup
     """
 
     ready_buttons = InlineKeyboardMarkup(row_width=row_width)
 
-    for i in args:
+    for i in buttons_list:
         if i[1].startswith('https://'):
             button = InlineKeyboardButton(i[0], url=i[1])
             ready_buttons.add(button)
@@ -56,6 +57,17 @@ def reply_keyboard_creator(buttons_list):
     return ready_buttons
 
 
+def main_menu_buttons(message):
+    feedback_count = 444
+    buttons = [
+        ['Локации', 'Товары ', 'Профиль'],
+        ['Баланс', f'Отзывы ({feedback_count})', 'Поддержка'],
+        ['Заработать']
+    ]
+    ready_buttons = reply_keyboard_creator(buttons)
+
+    return ready_buttons
+
 
 # Command "/start" handler
 @dp.message_handler(commands=['start'])
@@ -67,26 +79,33 @@ async def send_welcome(message: types.Message):
     balance = 0
     balance_mesg = f'Баланс ({balance})'
     bot_support = 'https://t.me/iso_support_bot'
-    gen_inline_keyboard_buttons = inline_keyboard_creator([balance_mesg, 'welcome'],
-                                                          [bot_mesg['bot_support'], bot_support])
+    gen_inline_keyboard_buttons = inline_keyboard_creator([ [balance_mesg, 'welcome'],
+                                                            [bot_mesg['bot_support'], bot_support]
+                                                          ])
     await message.answer(bot_mesg['welcome'], parse_mode='html', reply_markup=gen_inline_keyboard_buttons)
 
     # Good luck and main menu reply keyboards
-    feedback_count = 444
-    buttons = [
-        ['Локации', 'Товары (Уфа)', 'Профиль'],
-        ['Баланс', f'Отзывы ({feedback_count})', 'Поддержка'],
-        ['Заработать']
-    ]
-    ready_buttons = reply_keyboard_creator(buttons)
-    await message.answer('Удачных покупок!', reply_markup=ready_buttons)
+    buttons = main_menu_buttons(message)
+    await message.answer('Удачных покупок!', reply_markup=buttons)
 
     # Do you wan't referral code?  inlinekeyboard: show referral code
-    referral_code = inline_keyboard_creator(['Ввести реферальный код', 'referral_code'])
+    referral_code = inline_keyboard_creator([ ['Ввести реферальный код', 'referral_code'] ])
     await message.answer('Хотите ввести код реферала? После ввода кода реферала на ваш баланс будет начислено 50 руб',
                          reply_markup=referral_code)
 
-    choose_cities()
+    # Sends message("Выберите город:") to member with InlineKeyboards
+    # Gets list with dicts like:  [ {'id': 10, 'city': 'Уфа'}, {'id': 20, 'city': 'Челябинск'}, ... ]
+    cities_list = sql_handler.get_cities_list()
+    cities = [[i['city'], 'city'+str(i['id'])] for i in cities_list]
+    ready_buttons = inline_keyboard_creator(cities)
+    await message.answer('Выберите город:', reply_markup=ready_buttons)
+
+
+# City menu InlineKeyboardCreate handler
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('city'))
+async def callback_handler(callback_query: types.CallbackQuery):
+    await bot.send_message(callback_query.from_user.id, 'hello')
+    #await callback_query.answer('hello')
 
 
 if __name__ == "__main__":
