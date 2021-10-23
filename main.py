@@ -79,7 +79,7 @@ async def send_welcome(message: types.Message):
     balance = 0
     balance_mesg = f'Баланс ({balance})'
     bot_support = 'https://t.me/iso_support_bot'
-    gen_inline_keyboard_buttons = inline_keyboard_creator([ [balance_mesg, 'welcome'],
+    gen_inline_keyboard_buttons = inline_keyboard_creator([ [balance_mesg, 'balance'],
                                                             [bot_mesg['bot_support'], bot_support]
                                                           ])
     await message.answer(bot_mesg['welcome'], parse_mode='html', reply_markup=gen_inline_keyboard_buttons)
@@ -96,9 +96,20 @@ async def send_welcome(message: types.Message):
     # Sends message("Выберите город:") to member with InlineKeyboards
     # Gets list with dicts like:  [ {'id': 10, 'city': 'Уфа'}, {'id': 20, 'city': 'Челябинск'}, ... ]
     cities_list = sql_handler.get_cities_list()
-    cities = [[i['city'], 'city'+str(i['id'])] for i in cities_list]
+    cities = [[i['city'], 'main_menu_city'+str(i['id'])] for i in cities_list]
     ready_buttons = inline_keyboard_creator(cities)
-    await message.answer('Выберите город:', reply_markup=ready_buttons)
+    mesg = 'Выберите город:'
+    await message.answer(mesg, reply_markup=ready_buttons)
+
+
+
+@dp.message_handler(lambda mesg: mesg.text == 'Локации')
+async def cities_menu(message: types.Message):
+
+
+
+
+
 
 
 # City menu InlineKeyboardCreate handler
