@@ -69,6 +69,16 @@ def main_menu_buttons(message):
     return ready_buttons
 
 
+async def cities_menu(message):
+    # Gets list with dicts like:  [ {'id': 10, 'city': 'Уфа'}, {'id': 20, 'city': 'Челябинск'}, ... ]
+    cities_list = sql_handler.get_cities_list()
+    cities = [[i['city'], 'main_menu_city'+str(i['id'])] for i in cities_list]
+    ready_buttons = inline_keyboard_creator(cities)
+    mesg = 'Выберите город:'
+    # bot.send_message(chat_id=message.chat.id, text=mesg, reply_markup=ready_buttons)
+    await message.answer(chat_id=message.chat.id, text=mesg, reply_markup=ready_buttons)
+    print('hello')
+
 # Command "/start" handler
 @dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
@@ -94,17 +104,13 @@ async def send_welcome(message: types.Message):
                          reply_markup=referral_code)
 
     # Sends message("Выберите город:") to member with InlineKeyboards
-    # Gets list with dicts like:  [ {'id': 10, 'city': 'Уфа'}, {'id': 20, 'city': 'Челябинск'}, ... ]
-    cities_list = sql_handler.get_cities_list()
-    cities = [[i['city'], 'main_menu_city'+str(i['id'])] for i in cities_list]
-    ready_buttons = inline_keyboard_creator(cities)
-    mesg = 'Выберите город:'
-    await message.answer(mesg, reply_markup=ready_buttons)
+    cities_menu(message)
 
 
 
 @dp.message_handler(lambda mesg: mesg.text == 'Локации')
 async def cities_menu(message: types.Message):
+    pass
 
 
 
