@@ -35,7 +35,7 @@ def check_user_exists(chat_id):
     connection = connection_creator()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT * FROM users WHERE id = %s", (chat_id, ))
+    cursor.execute("SELECT * FROM users WHERE id = %s", (chat_id,))
     responce = cursor.fetchone()
 
     connection.close()
@@ -43,7 +43,7 @@ def check_user_exists(chat_id):
 
 
 def add_user(chat_id, first_name):
-    upper_letters_numbers_list = [chr(i) for i in range(ord('A'), ord('Z')+1)]
+    upper_letters_numbers_list = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
     upper_letters_numbers_list.extend([str(i) for i in range(10)])
     referal = ''
     for i in range(7):
@@ -64,7 +64,7 @@ def get_balance(chat_id):
     cursor = connection.cursor()
 
     cursor.execute("SELECT balance FROM users WHERE id = %s",
-                   (chat_id, )
+                   (chat_id,)
                    )
     balance = cursor.fetchone()
 
@@ -100,7 +100,7 @@ def get_user_city(chat_id):
     cursor = connection.cursor()
 
     cursor.execute("SELECT cities.city FROM users JOIN cities ON users.city = cities.id WHERE users.id = %s",
-                   (chat_id, )
+                   (chat_id,)
                    )
     user_city = cursor.fetchone()
 
@@ -125,10 +125,33 @@ def get_chosen_city_id(chat_id):
     cursor = connection.cursor()
 
     cursor.execute("SELECT chosen_city FROM users WHERE id = %s;",
-                   (chat_id, )
+                   (chat_id,)
                    )
     user_city = cursor.fetchone()
 
     connection.close()
     return user_city
 
+
+def get_products_from_city(city_id):
+    """
+    :param city_id:
+    :return: [{'id': 10, 'type': 'АЛЬФА (ПВП) КРИСТАЛЛ'}, {'id': 50, 'type': 'Мефедрон Мука'}]
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+                    SELECT products.product id, products_types.type FROM products
+                    JOIN products_types ON products.product = products_types.id
+                    WHERE city = %s;""",
+                   (city_id, )
+                   )
+
+    products_in_city = cursor.fetchall()
+
+    connection.close()
+    return products_in_city
+
+
+get_products_from_city(30)
