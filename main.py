@@ -26,17 +26,14 @@ with open('bot_messages.json', 'r', encoding='utf-8') as json_mesg:
     bot_mesg = json.load(json_mesg)
 
 
+# /READY
 async def city_menu(message, from_where):
     """
+    Генерирует сообщение "Выберите город:" с inline кнопками городов
     :param message:
     :param from_where: Тут ты должен передать 1 или 2.
         1 - генерируем список городов c callback_data "city_welcome+city_id
         2 - генерируем список городов с callback_data "city_location+city_id"
-
-        #В данном случае мы меням replay кнопку "Товары" на "Товары ({Выбранный город})"
-        #После этого отправим сообщение "Выбор сохранен" а потом сообщение "Выберите товар:" с инлайн кнопками
-        #2 это - если пользователь который выбрал город из сообщении который вернул reply кнопка "Локации".
-        #В данном случае мы отправим только сообщение "Выберите товар:" с инлайн кнопками
     :return:
     """
     which = ['city_welcome', 'city_location']
@@ -47,17 +44,6 @@ async def city_menu(message, from_where):
     ready_buttons = inline_keyboard_creator(cities)
     mesg = 'Выберите город:'
     await message.answer(text=mesg, reply_markup=ready_buttons)
-
-
-async def balance_menu(message, from_where):
-    """
-    :param message:
-    :param from_where: Тут ты должен передать 1 или 2.
-        1 это - если пользователь нажал на inline кнопку "Баланс" который находится в сообщении /start
-        2 это - если пользователь нажал на reply button кноку "Баланс" который находится в главном меню
-    :return:
-    """
-    pass
 
 
 # /READY
