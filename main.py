@@ -188,33 +188,6 @@ async def balance_menu(message: types.Message):
     pass
 
 
-# City menu InlineKeyboardCreate handler
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith('city'))
-async def chosen_city(callback_query: types.CallbackQuery):
-    # Если пользователь нажал на inline кнопку из welcome сообщении,
-    # тогда запишем в базу выбранный город и отправим "Выбор сохранен"
-    if callback_query.data.startswith('city_welcome'):
-        # Записываем в базу выбранный город
-        city_id = callback_query.data.replace('city_welcome', '')
-        sql_handler.update_user_city(
-            callback_query.from_user.id,
-            city_id
-        )
-
-        ready_buttons = main_menu_buttons(callback_query.from_user.id)
-        await bot.send_message(
-            callback_query.from_user.id,
-            'Выбор сохранен. Спасибо!',
-            reply_markup=ready_buttons
-        )
-
-    else:
-        city_id = callback_query.data.replace('city_location', '')
-
-    # Дальше мы покажем "Выберите товар:" и список товаров в этом районе
-    mesg = 'Выберите товар:'
-    print(mesg)
-
 
 if __name__ == "__main__":
     # Регистрируем обработчики(handlers) модуля menus/products.py
