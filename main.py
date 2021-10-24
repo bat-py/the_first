@@ -17,7 +17,7 @@ API_TOKEN = '1559565040:AAG97C16gpMUk4cZgElzGspPb8uplSCX0Ss'
 logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=API_TOKEN, parse_mode='html')
 dp = Dispatcher(bot)
 
 
@@ -85,12 +85,26 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(lambda mesg: mesg.text == 'Локации')
 async def cities_menu(message: types.Message):
     # Sends message("Выберите город:") to member with InlineKeyboards
-    await city_menu(message, 2)
+    await city_menu(message, from_where=2)
 
 
 @dp.message_handler(lambda mesg: mesg.text.startswith('Товары'))
 async def products_menu(message: types.Message):
-    pass
+    """
+    Запустится когда пользователь нажал на reply кнопку Товары из главного меню
+    :param message:
+    :return:
+    """
+
+    # Проверим пользователь до этого сохранил ли кокой-нибудь город. Ну короче если кнопка выглядит так "Товары (Уфа)"
+    user_city = sql_handler.get_user_city(message.chat.id)
+
+    # Запустим функцию который отправит сообщение "Выберите товар:" если было нажата на кнопку как "Товары (Воронеж)"
+    if user_city:
+        await products.waiting_for_product_type(message, user_city['city_id'])
+    # Если у польз. нету сохраненного города(тоесть нажал на кнопку "Товары") тогда отправим сообщение "Выберите город:"
+    else:
+        await city_menu(message, from_where=2)
 
 
 @dp.message_handler(lambda mesg: mesg.text == 'Профиль')

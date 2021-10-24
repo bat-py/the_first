@@ -96,12 +96,17 @@ def update_user_city(chat_id, city_id):
 
 
 def get_user_city(chat_id):
+    """
+    :param chat_id:
+    :return: Returns None or {'city': 'Уфа', 'city_id': 30}
+    """
     connection = connection_creator()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT cities.city FROM users JOIN cities ON users.city = cities.id WHERE users.id = %s",
-                   (chat_id,)
-                   )
+    cursor.execute(
+        "SELECT cities.city, users.city city_id FROM users JOIN cities ON users.city = cities.id WHERE users.id = %s",
+        (chat_id,)
+    )
     user_city = cursor.fetchone()
 
     connection.close()
@@ -145,7 +150,7 @@ def get_products_from_city(city_id):
                     SELECT products.product id, products_types.type FROM products
                     JOIN products_types ON products.product = products_types.id
                     WHERE city = %s;""",
-                   (city_id, )
+                   (city_id,)
                    )
 
     products_in_city = cursor.fetchall()
@@ -154,4 +159,12 @@ def get_products_from_city(city_id):
     return products_in_city
 
 
-get_products_from_city(30)
+def get_product_info(product_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM products_types WHERE id = %s;", (product_id,))
+    product_info = cursor.fetchone()
+
+    connection.close()
+    return product_info
