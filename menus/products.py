@@ -64,5 +64,17 @@ async def chosen_city(callback_query: types.CallbackQuery):
     await waiting_for_product_type(callback_query, city_id)
 
 
+async def chosen_product(callback_query: types.CallbackQuery):
+    pass
+
+
 def register_handlers_products(dp: Dispatcher):
-    dp.register_callback_query_handler(chosen_city, lambda c: c.data and c.data.startswith('city'))
+    """
+    Регистрируем все наши обработчики(handlers) который связано Локации и Товары
+    :param dp:
+    :return:
+    """
+    dp.register_callback_query_handler(
+        chosen_city,
+        lambda c: c.data.startswith('city_location') or c.data.startswith('city_welcome')
+    )

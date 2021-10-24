@@ -7,6 +7,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 import sql_handler
 from menus import products
+from menus import balance
 
 
 #API_TOKEN = '1018761895:AAE9zGMHZxYZlC_6kyRLAmTBC0Oubpp-QUQ'
@@ -92,7 +93,7 @@ async def send_welcome(message: types.Message):
 
     # Sends message("Выберите город:") to member with InlineKeyboards
     await city_menu(message, 1)
-    
+
 
 # /READY
 @dp.message_handler(lambda mesg: mesg.text == 'Локации')
@@ -108,11 +109,6 @@ async def products_menu(message: types.Message):
 
 @dp.message_handler(lambda mesg: mesg.text == 'Профиль')
 async def profile_menu(message: types.Message):
-    pass
-
-
-@dp.message_handler(lambda mesg: mesg.text == 'Баланс')
-async def balance_menu(message: types.Message):
     pass
 
 
@@ -134,6 +130,9 @@ async def balance_menu(message: types.Message):
 if __name__ == "__main__":
     # Регистрируем обработчики(handlers) модуля menus/products.py
     products.register_handlers_products(dp)
+
+    # Регистрируем обработичи(handlers) модуля menus/balance.py
+    balance.register_handlers_products(dp)
 
     executor.start_polling(dp, skip_updates=True)
 
