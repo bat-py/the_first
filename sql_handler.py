@@ -21,22 +21,24 @@ def get_cities_list():
     :return: List with dicts like:  [ {'id': 10, 'city': 'Уфа'}, {'id': 20, 'city': 'Челябинск'}, ... ]
     """
 
-    con = connection_creator()
-    cursor = con.cursor()
+    connection = connection_creator()
+    cursor = connection.cursor()
 
     cursor.execute("SELECT * FROM cities")
     cities = cursor.fetchall()
 
+    connection.close()
     return cities
 
 
 def check_user_exists(chat_id):
-    con = connection_creator()
-    cursor = con.cursor()
+    connection = connection_creator()
+    cursor = connection.cursor()
 
     cursor.execute("SELECT * FROM users WHERE id = %s", (chat_id, ))
     responce = cursor.fetchone()
 
+    connection.close()
     return responce
 
 
@@ -54,6 +56,7 @@ def add_user(chat_id, first_name):
                    (chat_id, first_name, referal, 0)
                    )
     connection.commit()
+    connection.close()
 
 
 def get_balance(chat_id):
@@ -65,6 +68,7 @@ def get_balance(chat_id):
                    )
     balance = cursor.fetchone()
 
+    connection.close()
     return balance['balance']
 
 
@@ -76,6 +80,21 @@ def get_feedback_count():
     cursor.execute("")
 
 
+# После этой записи кнопка Товары изменится на "Товары (Имя города)"
+# Если нажимаешь на кнопку "Товары (Имя города)" тогда бот сразу предложит выбрать товар
+# Если столбец users.city пустой тогда бот предложит выбрать сперва город
+def update_user_city(chat_id, city_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("UPDATE users SET city = %s WHERE id = %s;",
+                   (city_id, chat_id)
+                   )
+    connection.commit()
+
+    connection.close()
+
+
 def get_user_city(chat_id):
     connection = connection_creator()
     cursor = connection.cursor()
@@ -85,10 +104,31 @@ def get_user_city(chat_id):
                    )
     user_city = cursor.fetchone()
 
+    connection.close()
     return user_city
 
 
-def change_user_city(chat_id):
-    pass
+def update_chosen_city(chat_id, city_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
 
+    cursor.execute("UPDATE users SET chosen_city = %s WHERE id = %s;",
+                   (city_id, chat_id)
+                   )
+    connection.commit()
+
+    connection.close()
+
+
+def get_chosen_city_id(chat_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT chosen_city FROM users WHERE id = %s;",
+                   (chat_id, )
+                   )
+    user_city = cursor.fetchone()
+
+    connection.close()
+    return user_city
 

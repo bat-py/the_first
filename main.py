@@ -2,8 +2,12 @@ import logging
 import aiogram.types
 from aiogram import Bot, Dispatcher, executor, types
 import json
+
+from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 import sql_handler
+from menus import products
+
 
 API_TOKEN = '1018761895:AAE9zGMHZxYZlC_6kyRLAmTBC0Oubpp-QUQ'
 
@@ -187,15 +191,42 @@ async def balance_menu(message: types.Message):
 # City menu InlineKeyboardCreate handler
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('city'))
 async def callback_handler(callback_query: types.CallbackQuery):
-    # Если пользователь нажал на inline кнопку из welcome сообщении, тогда он сперва отправит "Выбор сохранен"
+    # Если пользователь нажал на inline кнопку из welcome сообщении,
+    # тогда запишем в базу выбранный город и отправим "Выбор сохранен"
     if callback_query.data.startswith('city_welcome'):
+        # Записываем в базу выбранный город
+        city_id = callback_query.data.replace('city_welcome', '')
+        sql_handler.update_user_city(
+            callback_query.from_user.id,
+            city_id
+        )
+
         ready_buttons = main_menu_buttons(callback_query.from_user.id)
-        await bot.send_message(callback_query.from_user.id,
-                               'Выбор сохранен. Спасибо!',
-                               reply_markup=ready_buttons
-                               )
-    #await callback_query.answer('hello')
+        await bot.send_message(
+            callback_query.from_user.id,
+            'Выбор сохранен. Спасибо!',
+            reply_markup=ready_buttons
+        )
+
+    else:
+        city_id = callback_query.data.replace('city_location', '')
+
+    # Меняем статус на waiting_for_products_type после этого любой запрос примет обработчик products.product_type_chosen
+    await products.Products.waiting_for_product_type.set()
+
+    # Меняем столбец users.chosen_city на id выбранного города, чтобы products.product_type_chosen мог понять
+    # кикие товары с какого города надо показать
+    sql_handler.update_chosen_city(callback_query.from_user.id, city_id)
+
+    # Дальше мы покажем "Выберите товар:" и список товаров в этом районе
+    mesg = 'Выберите товар:'
+    
+
+
 
 
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
+
+    # Регистрируем обработчики(handlers) модуля menus/products.py
+    products.register_handlers_products(dp)
