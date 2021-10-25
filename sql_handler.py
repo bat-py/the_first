@@ -149,7 +149,7 @@ def get_products_from_city(city_id):
     cursor.execute("""
                     SELECT products.product id, products_types.type FROM products
                     JOIN products_types ON products.product = products_types.id
-                    WHERE city = %s;""",
+                    WHERE city = %s and status = 1;""",
                    (city_id,)
                    )
 
@@ -160,6 +160,10 @@ def get_products_from_city(city_id):
 
 
 def get_product_info(product_id):
+    """
+    :param product_id:
+    :return: { 'id':'', 'type':'', 'photo_name':'', 'about':'' }
+    """
     connection = connection_creator()
     cursor = connection.cursor()
 
@@ -168,3 +172,52 @@ def get_product_info(product_id):
 
     connection.close()
     return product_info
+
+
+def get_city_name(city_id):
+    """
+    :param city_id:
+    :return: {'city': 'Уфа'}
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT city FROM cities WHERE id = %s;",
+                   (city_id,)
+                   )
+    city_name = cursor.fetchone()
+
+    connection.close()
+    return city_name
+
+
+def get_one_product_type_in_city(city_id, product_id):
+    """
+    Например пользователь выбрал город Уфа, товар альфа-пвп. Функция возврашает все альфа-пвп товары в городе Уфа
+    :param city_id:
+    :param product_id:
+    :return: [{'city_id': 10, 'city': 'Уфа', 'product_id': 40, 'product': 'Шишки Amnesia Feminised',
+               'rayon_id': 5, 'rayon': 'Юматово', 'massa_id': 40, 'massa': '2.00gr'}, ...]
+    """
+
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT products.city city_id, cities.city city, products.product product_id, products_types.type product,
+    products.rayon rayon_id, products_rayons.region rayon, products.massa massa_id, products_massa.massa_gr massa
+    FROM products
+    JOIN cities ON products.city = cities.id
+    JOIN products_types ON products.product = products_types.id
+    JOIN products_rayons ON products.rayon = products_rayons.id
+    JOIN products_massa ON products.massa = products_massa.id
+    WHERE products.city = %s and products.product = %s and status = 1;
+    """,
+                   (city_id, product_id)
+                   )
+
+    products = cursor.fetchall()
+
+    connection.close()
+    return products
+

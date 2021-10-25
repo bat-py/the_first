@@ -70,13 +70,12 @@ async def chosen_product(callback_query: types.CallbackQuery):
     Запускается если пользователь выбрал товар (например альфа или мефедрон).
     Получает callback_data как: "city10;product30"
     :param callback_query:
-    :return:
+    :return: Фотографию товара, информацию о товаре, наличие по городу, "выберете город:" c inline кнопками
     """
     callback_data = callback_query.data.split(';')
     city_id = callback_data[0].replace('city', '')
     product_id = callback_data[1].replace('product', '')
     chat_id = callback_query.from_user.id
-
 
     product_info = sql_handler.get_product_info(product_id)
 
@@ -92,11 +91,55 @@ async def chosen_product(callback_query: types.CallbackQuery):
         text=product_info["about"]
     )
 
+    # Получаем список доступных товаров выбраннотого типа в выбранном городе
+    products = sql_handler.get_one_product_type_in_city(city_id, product_id)
+    city_name = products[0]['city']
+    product_name = products[0]['product']
+
     # Теперь отправим сообщение "Наличие по {название города}"
+    msg1 = f'Наличие по г. {city_name}'
 
+    products_massa = []
+    for product in products:
+        if product['massa'] not in products_massa:
+            products_massa.append(product['massa'])
 
+    # Теперь создаем msg2 который хранить строки как: АЛЬФА (ПВП) КРИСТАЛЛ - 0.50 г, районы: северо-восточный, свесткий
+    msg2 = ''
+    for massa in products_massa:
+        rayons = []
+        # Будет хранить массив как: [rayon_text, callback_data_to_rayon]
+        for product in products:
+            if product['massa'] == massa:
+                rayons.append(product['rayon'].lower())
+
+        part_msg2 = f'<b>{product_name} - {massa.replace("gr", " г")}</b>, районы: {", ".join(rayons)}\n'
+        msg2 += part_msg2
+
+    await callback_query.bot.send_message(
+        chat_id=chat_id,
+        text=f'{msg1}\n\n{msg2}'
+    )
+
+    # Отправим сообщение "Выберите район:" c inline кнопками
+    # Хранит в себе [ [rayon_name, callback_data], ...] В callback_data будет "city10;product30;rayon20"
+    rayon_name_callback_data = []
+
+    added_rayons_id = []
+    for product in products:
+        if product['rayon_id'] not in added_rayons_id:
+            inline_rayon_button = [product['rayon'], f"{callback_query.data};rayon{product['rayon_id']}"]
+            rayon_name_callback_data.append(inline_rayon_button)
+
+            added_rayons_id.append(product['rayon_id'])
+
+    inline_rayon_buttons = inline_keyboard_creator(rayon_name_callback_data, row_width=1)
     # Теперь отправим сообщение "Выберите район:" с inline кнопками
-
+    await callback_query.bot.send_message(
+        chat_id=chat_id,
+        text='Выберите район:',
+        reply_markup=inline_rayon_buttons
+    )
 
 
 def register_handlers_products(dp: Dispatcher):
@@ -117,6 +160,5 @@ def register_handlers_products(dp: Dispatcher):
         # Если получит callback_data как: "city10;product30"
         lambda c: c.data.startswith('city') and c.data.count(';') == 1
     )
-
 
 
