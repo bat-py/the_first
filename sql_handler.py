@@ -221,3 +221,74 @@ def get_one_product_type_in_city(city_id, product_id):
     connection.close()
     return products
 
+
+def get_product_name_by_id(product_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT type product_name FROM products_types WHERE id = %s", (product_id,))
+    product_name = cursor.fetchone()
+
+    connection.close()
+    return product_name
+
+
+def get_rayon_name_by_id(rayon_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT region rayon_name FROM products_rayons WHERE id = %s", (rayon_id,))
+    rayon_name = cursor.fetchone()
+
+    connection.close()
+    return rayon_name
+
+
+def get_product_massas_price_in_chosen_rayon(city_id, product_id, rayon_id):
+    """
+    :param city_id:
+    :param product_id:
+    :param rayon_id:
+    :return: list with dicts elements: [{'massa_id', 'massa', 'price'}, {...}]
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT massa massa_id, massa_gr massa, price
+    FROM products
+    JOIN products_massa ON products.massa = products_massa.id
+    WHERE city = %s and product = %s and rayon = %s;
+    """,
+                   (city_id, product_id, rayon_id)
+                   )
+    massa_price_list = cursor.fetchall()
+
+    connection.close()
+    return massa_price_list
+
+
+def get_aviable_klads_type(city_id, product_id, rayon_id, masssa_id):
+    """
+    :param city_id:
+    :param product_id:
+    :param rayon_id:
+    :param masssa_id:
+    :return: dicts' list like: [{klad_id, klad_name}, {}, ...]
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT products.klad_type klad_id, klad_types.type klad_name 
+    FROM products 
+    JOIN klad_types ON klad_type = klad_types.id
+    WHERE city = %s AND product = %s AND rayon = %s AND massa = %s;
+    """,
+                   (city_id, product_id, rayon_id, masssa_id)
+                   )
+
+    aviable_klads = cursor.fetchall()
+
+    connection.close()
+    return aviable_klads

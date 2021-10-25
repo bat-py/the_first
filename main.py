@@ -2,12 +2,16 @@ import logging
 import aiogram.types
 from aiogram import Bot, Dispatcher, executor, types
 import json
+
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+
 from button_creators import *
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 import sql_handler
 from menus import products
 from menus import balance
+from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 #API_TOKEN = '1018761895:AAE9zGMHZxYZlC_6kyRLAmTBC0Oubpp-QUQ'
@@ -18,7 +22,8 @@ logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
 bot = Bot(token=API_TOKEN, parse_mode='html')
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 
 
 # Getting all bot messages
@@ -48,7 +53,7 @@ async def city_menu(message, from_where):
 
 # /READY
 # Command "/start" handler
-@dp.message_handler(commands=['start'])
+@dp.message_handler(commands=['start'], state='*')
 async def send_welcome(message: types.Message):
     if not sql_handler.check_user_exists(message.chat.id):
         sql_handler.add_user(message.chat.id, message.chat.first_name)
@@ -109,7 +114,7 @@ async def products_menu(message: types.Message):
 
 @dp.message_handler(lambda mesg: mesg.text == 'Профиль')
 async def profile_menu(message: types.Message):
-    pass
+    print('asshole')
 
 
 @dp.message_handler(lambda mesg: mesg.text.startswith('Отзывы'))

@@ -142,6 +142,101 @@ async def chosen_product(callback_query: types.CallbackQuery):
     )
 
 
+async def chosen_rayon(callback_query: types.CallbackQuery):
+    """
+    Запускается если пользователь выбрал район товора
+    :param callback_query: callback_query.data is like: 'city20;product40;rayon60'
+    :return: сообщения "Выберите фасовку для товара АЛЬФА (ПВП) КРИСТАЛЛ:" с inline кнопками где показано "масса - цена"
+    """
+    chat_id = callback_query.from_user.id
+
+    callback_data = callback_query.data.split(';')
+    city_id = callback_data[0].replace('city', '')
+    product_id = callback_data[1].replace('product', '')
+    rayon_id = callback_data[2].replace('rayon', '')
+
+    product_name = sql_handler.get_product_name_by_id(product_id)['product_name']
+    rayon_name = sql_handler.get_rayon_name_by_id(rayon_id)['rayon_name']
+
+    # Отправляем сообщение как: "Вы выбрали район Северо-Восточный"
+    await callback_query.bot.send_message(
+        chat_id=chat_id,
+        text=f'Вы выбрали район {rayon_name}'
+    )
+
+    # Отправим сообщение "Выберите фасовку для товара {product_name}" c inline кнопками типа "0.5 г - 1500р"
+    # Сперва определим какие есть фасовки выбранного товара в выбранном районе
+    massa_price_list = sql_handler.get_product_massas_price_in_chosen_rayon(city_id, product_id, rayon_id)
+    mesg = f'Выберите фасовку для товара {product_name}'
+
+    inline_buttons_list = []
+    for i in massa_price_list:
+        button_text = f'{i["massa"].replace("gr", "")} г - {str(i["price"])} руб'
+        callback_data = f'{callback_query.data};massa{i["massa_id"]}'
+        inline_buttons_list.append([button_text, callback_data])
+
+    # Создаем кнопки
+    ready_buttons = inline_keyboard_creator(inline_buttons_list, row_width=1)
+
+    await callback_query.bot.send_message(
+        chat_id=chat_id,
+        text=mesg,
+        reply_markup=ready_buttons
+    )
+
+
+async def chosen_massa(callback_query: types.CallbackQuery):
+    """
+    Запускается если пользователь выбрал фасовку. Получает callback.data типа: "city20;product40;rayon60;massa30"
+    :param callback_query:
+    :return: Отправит сообщение "Выберите тип клада:" с inline кнопками.
+    """
+    chat_id = callback_query.from_user.id
+
+    callback_data_list = callback_query.data.split(';')
+    city_id = callback_data_list[0]
+    product_id = callback_data_list[1]
+    rayon_id = callback_data_list[2]
+    massa_id = callback_data_list[3]
+
+    mesg = "Выберите тип клада:"
+
+    aviable_klads = sql_handler.get_aviable_klads_type(city_id, product_id, rayon_id, massa_id)
+
+    list_for_create_buttons = []
+    for i in aviable_klads:
+        button_text = i['klad_name']
+        button_callback_data = f'{callback_query.data};klad_type{i["klad_id"]}'
+        button = [button_text, button_callback_data]
+        list_for_create_buttons.append(button)
+
+    ready_inline_buttons = inline_keyboard_creator(list_for_create_buttons, row_width=1)
+
+    await callback_query.bot.send_message(
+        chat_id=chat_id,
+        text=mesg,
+        reply_markup=ready_inline_buttons
+    )
+
+
+async def chosen_klad_type(callback_query: types.CallbackQuery):
+    """
+    Запускается если пользователь выбрал тип клада. Получает callback.data типа: "city20;product40;rayon60;massa30;klad_type20"
+    :param callback_query:
+    :return: Отправит сообщение "Выберите способ оплаты:"  c inline кнопками: Оплата с баланса, Лайткоин ...
+    """
+    chat_id = callback_query.from_user.id
+
+    callback_data_list = callback_query.data.split(';')
+    city_id = callback_data_list[0]
+    product_id = callback_data_list[1]
+    rayon_id = callback_data_list[2]
+    massa_id = callback_data_list[3]
+    klad_type_id = callback_data_list[4]
+
+    mesg = 'Выберите способ оплаты:'
+
+
 def register_handlers_products(dp: Dispatcher):
     """
     Регистрируем все наши обработчики(handlers) который связано Локации и Товары
@@ -161,4 +256,23 @@ def register_handlers_products(dp: Dispatcher):
         lambda c: c.data.startswith('city') and c.data.count(';') == 1
     )
 
+    # Регистрируем обработчик который запускается послле выбора района
+    dp.register_callback_query_handler(
+        chosen_rayon,
+        # Если получит callback_data как: "city20;product40;rayon60"
+        lambda c: c.data.startswith('city') and c.data.count(';') == 2
+    )
 
+    # Регистрируем обработчик который запускается после выбора массы
+    dp.register_callback_query_handler(
+        chosen_massa,
+        # Если получит callback_data как: "city20;product40;rayon60;massa20"
+        lambda c: c.data.startswith('city') and c.data.count(';') == 3
+    )
+
+    # Регистрируем обработчик который запускается после выбора типа клада
+    dp.register_callback_query_handler(
+        chosen_klad_type,
+        # Если получит callback_data как: "city20;product40;rayon60;massa20;klad_type20"
+        lambda c: c.data.startswith('city') and c.data.count(';') == 4
+    )
