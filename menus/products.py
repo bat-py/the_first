@@ -77,8 +77,7 @@ async def chosen_product(callback_query: types.CallbackQuery):
     product_id = callback_data[1].replace('product', '')
     chat_id = callback_query.from_user.id
 
-    #сообщение "Наличие по {название города}",
-    # сообщение "Выберите район:" с inline кнопками
+
     product_info = sql_handler.get_product_info(product_id)
 
     # Теперь отправим фотографию выбранного товара
@@ -94,6 +93,9 @@ async def chosen_product(callback_query: types.CallbackQuery):
     )
 
     # Теперь отправим сообщение "Наличие по {название города}"
+
+
+    # Теперь отправим сообщение "Выберите район:" с inline кнопками
 
 
 
