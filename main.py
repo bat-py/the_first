@@ -2,15 +2,14 @@ import logging
 import aiogram.types
 from aiogram import Bot, Dispatcher, executor, types
 import json
-
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-
 from button_creators import *
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 import sql_handler
 from menus import products
 from menus import balance
+from menus import earn
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
@@ -50,11 +49,12 @@ async def city_menu(message, from_where):
     mesg = 'Выберите город:'
     await message.answer(text=mesg, reply_markup=ready_buttons)
 
-
 # /READY
-# Command "/start" handler
-@dp.message_handler(commands=['start'], state='*')
-async def send_welcome(message: types.Message):
+async def send_welcome(message):
+    """
+    :param message:
+    :return: Welcome message and main menu reply buttons
+    """
     if not sql_handler.check_user_exists(message.chat.id):
         sql_handler.add_user(message.chat.id, message.chat.first_name)
         print()
@@ -84,6 +84,14 @@ async def send_welcome(message: types.Message):
 
     # Sends message("Выберите город:") to member with InlineKeyboards
     await city_menu(message, 1)
+
+
+# /READY
+# Command "/start" handler
+@dp.message_handler(commands=['start'], state='*')
+async def start_command_handler(message: types.Message, state: FSMContext):
+    await state.finish()
+    await send_welcome(message)
 
 
 # /READY
@@ -122,14 +130,17 @@ async def products_menu(message: types.Message):
     pass
 
 
+# /READY
 @dp.message_handler(lambda mesg: mesg.text == 'Поддержка')
 async def balance_menu(message: types.Message):
-    pass
+    await message.answer(bot_mesg['support_menu'])
 
 
-@dp.message_handler(lambda mesg: mesg.text == 'Заработать')
-async def balance_menu(message: types.Message):
-    pass
+# /READY
+@dp.message_handler(lambda mesg: mesg.text == 'Отменить', state='*')
+async def cancel_button_handler(message: types.Message, state: FSMContext):
+    await state.finish()
+    await send_welcome(message)
 
 
 if __name__ == "__main__":
@@ -138,6 +149,9 @@ if __name__ == "__main__":
 
     # Регистрируем обработичи(handlers) модуля menus/balance.py
     balance.register_handlers_products(dp)
+
+    # Регистрируем обработичи(handlers) модуля menus/balance.py
+    earn.register_handlers_products(dp)
 
     executor.start_polling(dp, skip_updates=True)
 

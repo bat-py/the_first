@@ -292,3 +292,14 @@ def get_aviable_klads_type(city_id, product_id, rayon_id, masssa_id):
 
     connection.close()
     return aviable_klads
+
+
+def get_referal_code(chat_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT referal FROM users WHERE id = %s;", (chat_id, ))
+    referal = cursor.fetchone()
+
+    connection.close()
+    return referal
