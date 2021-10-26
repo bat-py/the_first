@@ -298,8 +298,22 @@ def get_referal_code(chat_id):
     connection = connection_creator()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT referal FROM users WHERE id = %s;", (chat_id, ))
+    cursor.execute("SELECT referal FROM users WHERE id = %s;", (chat_id,))
     referal = cursor.fetchone()
 
     connection.close()
     return referal
+
+
+def get_aviable_payments_methods():
+    """
+    :return:  [{id, status, method_name, my_wallet}, {}, ...]
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM payment_methods WHERE status = 1;")
+    methods_list = cursor.fetchall()
+
+    connection.close()
+    return methods_list

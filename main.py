@@ -10,6 +10,7 @@ import sql_handler
 from menus import products
 from menus import balance
 from menus import earn
+from menus import profile
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
@@ -48,6 +49,7 @@ async def city_menu(message, from_where):
     ready_buttons = inline_keyboard_creator(cities)
     mesg = 'Выберите город:'
     await message.answer(text=mesg, reply_markup=ready_buttons)
+
 
 # /READY
 async def send_welcome(message):
@@ -120,11 +122,6 @@ async def products_menu(message: types.Message):
         await city_menu(message, from_where=2)
 
 
-@dp.message_handler(lambda mesg: mesg.text == 'Профиль')
-async def profile_menu(message: types.Message):
-    print('asshole')
-
-
 @dp.message_handler(lambda mesg: mesg.text.startswith('Отзывы'))
 async def products_menu(message: types.Message):
     pass
@@ -132,7 +129,8 @@ async def products_menu(message: types.Message):
 
 # /READY
 @dp.message_handler(lambda mesg: mesg.text == 'Поддержка')
-async def balance_menu(message: types.Message):
+async def balance_menu(message: types.Message, state: FSMContext):
+    await state.finish()
     await message.answer(bot_mesg['support_menu'])
 
 
@@ -148,10 +146,13 @@ if __name__ == "__main__":
     products.register_handlers_products(dp)
 
     # Регистрируем обработичи(handlers) модуля menus/balance.py
-    balance.register_handlers_products(dp)
+    balance.register_handlers_balance(dp)
 
-    # Регистрируем обработичи(handlers) модуля menus/balance.py
-    earn.register_handlers_products(dp)
+    # Регистрируем обработичи(handlers) модуля menus/earn.py
+    earn.register_handlers_earn(dp)
+
+    # Регистрируем обработичи(handlers) модуля menus/profile.py
+    profile.register_handlers_profile(dp)
 
     executor.start_polling(dp, skip_updates=True)
 
