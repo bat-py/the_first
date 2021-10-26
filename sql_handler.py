@@ -317,3 +317,33 @@ def get_aviable_payments_methods():
 
     connection.close()
     return methods_list
+
+
+def randomly_get_wallet_address(payment_method_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT my_wallet FROM payment_methods WHERE id = %s AND status = 1;", (payment_method_id,))
+    # Получаем {'my_wallet': '998984561875,7741369875'}
+    my_wallet = cursor.fetchone()
+
+    my_wallets = my_wallet['my_wallet'].split(',')
+    random_chosen_wallet = random.choice(my_wallets)
+
+    connection.close()
+    return random_chosen_wallet
+
+
+def order_adder(chat_id, order_number):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+                   INSERT INTO active_orders(chat_id, order_number, date_time)
+                   VALUES(%s, %s, NOW());
+                   """,
+                   (chat_id, order_number)
+                   )
+
+    connection.commit()
+    connection.close()
