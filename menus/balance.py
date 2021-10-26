@@ -184,7 +184,7 @@ async def payment_method_chosen(callback_query: types.CallbackQuery, state: FSMC
     # Добавим пользователся в базу в течении часа если пользователь попытается открыть товары или баланс
     # он получит сообщение типа: "Необходимо отменить текущий заказ или пополнение баланса!
     #  Если вы хотите отменить текущий заказ или пополнение, введите /cancel"
-    sql_handler.order_adder(callback_query.from_user.id, order_number)
+    sql_handler.order_adder(callback_query.from_user.id, order_number, 'refill')
 
     wanna_cancel_text = 'Если вы передумали, и не хотите платить нажмите кнопку ниже.'
     button_text_data = ['Отменить пополнение баланса', 'cancel_refill']

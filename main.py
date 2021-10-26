@@ -7,6 +7,7 @@ from button_creators import *
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 import sql_handler
+import cancel_order_system_handlers
 from menus import products
 from menus import balance
 from menus import earn
@@ -142,6 +143,9 @@ async def cancel_button_handler(message: types.Message, state: FSMContext):
 
 
 if __name__ == "__main__":
+    # Регистрируем обработчики(handlers) системы "Отмена заявок"
+    cancel_order_system_handlers.register_cancel_system_handlers(dp)
+
     # Регистрируем обработчики(handlers) модуля menus/products.py
     products.register_handlers_products(dp)
 

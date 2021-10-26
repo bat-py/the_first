@@ -51,7 +51,7 @@ async def datasheets_menu(message: types.Message):
     inline_buttons = types.InlineKeyboardMarkup(row_width=2)
     for datasheet in datasheets_list:
         inline_buttons.add(InlineKeyboardButton(datasheet, callback_data='datasheet_name'+datasheet))
-
+# callback_data='datasheet_dISDIASL'
     mesg = "Список даташитов:"
 
     await message.answer(mesg, reply_markup=inline_buttons)

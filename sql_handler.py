@@ -334,15 +334,24 @@ def randomly_get_wallet_address(payment_method_id):
     return random_chosen_wallet
 
 
-def order_adder(chat_id, order_number):
+def order_adder(chat_id, order_number, type):
+    """
+    В type можно указать либо "refill" либо "product_order".
+    Если refill тогда при /cancel пользователю отправим "Отмена пополнения..."
+    Если product_order тогда при /cancel пользователю отправим "Отмена заказа..."
+    :param chat_id:
+    :param order_number:
+    :param type:
+    :return:
+    """
     connection = connection_creator()
     cursor = connection.cursor()
 
     cursor.execute("""
-                   INSERT INTO active_orders(chat_id, order_number, date_time)
-                   VALUES(%s, %s, NOW());
+                   INSERT INTO active_orders(chat_id, order_number, date_time, type)
+                   VALUES(%s, %s, NOW(), %s);
                    """,
-                   (chat_id, order_number)
+                   (chat_id, order_number, type)
                    )
 
     connection.commit()
@@ -359,12 +368,21 @@ def check_member_order_exist(chat_id):
     cursor = connection.cursor()
 
     cursor.execute("""
-    SELECT order_number FROM active_orders WHERE date_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR) AND
+    SELECT * FROM active_orders WHERE date_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR) AND
     chat_id = %s ORDER BY id DESC;
     """,
                    (chat_id, )
                    )
-    order_number = cursor.fetchall()
+    order_number = cursor.fetchone()
 
     connection.close()
     return order_number
+
+
+def del_member_orders(chat_id):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("DELETE FROM active_orders WHERE chat_id = %s", (chat_id, ))
+
+    connection.close()
