@@ -347,3 +347,24 @@ def order_adder(chat_id, order_number):
 
     connection.commit()
     connection.close()
+
+
+def check_member_order_exist(chat_id):
+    """
+    :param chat_id:
+    :return: Либо вернет {'order_number'} если за последный час пользователь создал заявку на пололнение или на покупку
+    либо вернет None если за последный час не создал
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT order_number FROM active_orders WHERE date_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR) AND
+    chat_id = %s ORDER BY id DESC;
+    """,
+                   (chat_id, )
+                   )
+    order_number = cursor.fetchall()
+
+    connection.close()
+    return order_number

@@ -72,6 +72,17 @@ async def chosen_product(callback_query: types.CallbackQuery):
     :param callback_query:
     :return: Фотографию товара, информацию о товаре, наличие по городу, "выберете город:" c inline кнопками
     """
+    # Если пользователь за последный час открыл заявку на попол или покупку, тогда отправим "Необходимо отменить тек..."
+    check_member_order_exist = sql_handler.check_member_order_exist(callback_query.from_user.id)
+    if check_member_order_exist:
+        # Отправим всплываюшое сообшение с кнопкой ОК
+        await callback_query.bot.answer_callback_query(
+            callback_query.id,
+            bot_mesg['you_should_cancel_order_of_refill'],
+            show_alert=True
+        )
+        return
+
     callback_data = callback_query.data.split(';')
     city_id = callback_data[0].replace('city', '')
     product_id = callback_data[1].replace('product', '')

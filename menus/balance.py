@@ -40,6 +40,14 @@ async def balance_menu(callback_query_or_message):
     :param callback_query_or_message:
     :return: message like: "Пополнение баланса \n\n Ваш баланс: 0 руб ..." with reply button "Отменить"
     """
+    # Если пользователь за последный час открыл заявку на попол или покупку, тогда отправим "Необходимо отменить тек..."
+    check_member_order_exist = sql_handler.check_member_order_exist(callback_query_or_message.from_user.id)
+    if check_member_order_exist:
+        await callback_query_or_message.bot.send_message(
+            callback_query_or_message.from_user.id, bot_mesg['you_should_cancel_order_of_refill']
+        )
+        return
+
 
     balance = str(sql_handler.get_balance(callback_query_or_message.from_user.id))
     mesg = bot_mesg['balance_replenishment'].replace('xxx', balance)

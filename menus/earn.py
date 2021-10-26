@@ -13,6 +13,14 @@ async def earn_menu(message_or_callback_query):
     :return: Сперва отправит сообщение "Ваш код реферала: SSYLP8T",
     потом "Вы можете заработать приглашая покупателей." c inline кнопкой "Подробнее"
     """
+    # Если пользователь за последный час открыл заявку на попол или покупку, тогда отправим "Необходимо отменить тек..."
+    check_member_order_exist = sql_handler.check_member_order_exist(message_or_callback_query.from_user.id)
+    if check_member_order_exist:
+        await message_or_callback_query.bot.send_message(
+            message_or_callback_query.from_user.id, bot_mesg['you_should_cancel_order_of_refill']
+        )
+        return
+
     chat_id = message_or_callback_query.from_user.id
     referal_code = sql_handler.get_referal_code(chat_id)['referal']
     your_referal_code_mesg = bot_mesg['your_referal_code'].replace('xxx', referal_code)

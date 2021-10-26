@@ -14,6 +14,13 @@ class ProfileMenuStates(StatesGroup):
 
 
 async def profile_menu(message: types.Message):
+    # Если пользователь за последный час открыл заявку на попол или покупку, тогда отправим "Необходимо отменить тек..."
+    check_member_order_exist = sql_handler.check_member_order_exist(message.from_user.id)
+
+    if check_member_order_exist:
+        await message.bot.send_message(message.from_user.id, bot_mesg['you_should_cancel_order_of_refill'])
+        return
+
     user_id = str(message.from_user.id)
     balance = str(sql_handler.get_balance(user_id))
 
