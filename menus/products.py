@@ -432,7 +432,7 @@ async def order_confirmed(callback_query: types.CallbackQuery):
     else:
         mesg = bot_mesg['number_applicatoin_to_buy_product_card'].replace('***order_number***', order_number) \
                                                                   .replace('***access_code***', access_code)\
-                                                                  .replace('***summa***', str(product_price))\
+                                                                  .replace('***price***', str(product_price))\
                                                                   .replace('***wallet***', wallet_addess)
         await callback_query.bot.send_message(chat_id, mesg, reply_markup=cancel_support_buttons)
 
