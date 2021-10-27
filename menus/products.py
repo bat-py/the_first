@@ -41,10 +41,10 @@ async def waiting_for_product_type(callback_query_or_message, city_id):
     added_products = []
     for product in products_dict_list_in_city:
         if product['id'] not in added_products:
+            added_products.append(product['id'])
             ready_products_dict_list_in_city.append(product)
 
     products_list_list_in_city = []
-
     for product in ready_products_dict_list_in_city:
         inline_button_text = product['type']
         callback_data = f'city{city_id};product{product["id"]}'
