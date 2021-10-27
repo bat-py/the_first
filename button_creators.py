@@ -44,7 +44,7 @@ def reply_keyboard_creator(buttons_list):
 
 
 def main_menu_buttons(chat_id):
-    feedback_count = 444
+    feedback_count = sql_handler.get_feedback_count()
 
     user_city = sql_handler.get_user_city(chat_id)
     # Если он еще не выбрал город из welcome сообщении

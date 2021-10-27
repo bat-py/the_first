@@ -72,13 +72,33 @@ def get_balance(chat_id):
     return balance['balance']
 
 
-####
 def get_feedback_count():
+    """
+    :return: feedback count in str: '5246'
+    """
     connection = connection_creator()
     cursor = connection.cursor()
 
-    cursor.execute("")
+    cursor.execute("SELECT data FROM additional_data WHERE data_name = 'feedbacks_count'")
 
+    feedbacks_count = cursor.fetchone()
+    connection.close()
+
+    if feedbacks_count:
+        return feedbacks_count['data']
+    else:
+        return '4691'
+
+
+def update_feedback_count(feedback_count):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("UPDATE additional_data SET data = %s WHERE data_name = 'feedbacks_count';", (feedback_count, ))
+    connection.commit()
+    connection.close()
+
+update_feedback_count(13)
 
 # После этой записи кнопка Товары изменится на "Товары (Имя города)"
 # Если нажимаешь на кнопку "Товары (Имя города)" тогда бот сразу предложит выбрать товар
