@@ -37,9 +37,15 @@ async def waiting_for_product_type(callback_query_or_message, city_id):
     # Получает list с dict элементами: [ {id, type}, ... ]
     products_dict_list_in_city = sql_handler.get_products_from_city(city_id)
 
+    ready_products_dict_list_in_city = []
+    added_products = []
+    for product in products_dict_list_in_city:
+        if product['id'] not in added_products:
+            ready_products_dict_list_in_city.append(product)
+
     products_list_list_in_city = []
 
-    for product in products_dict_list_in_city:
+    for product in ready_products_dict_list_in_city:
         inline_button_text = product['type']
         callback_data = f'city{city_id};product{product["id"]}'
         products_list_list_in_city.append([inline_button_text, callback_data])
