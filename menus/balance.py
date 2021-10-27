@@ -205,6 +205,12 @@ def register_handlers_balance(dp: Dispatcher):
     :param dp:
     :return:
     """
+    # Если пользователь отправил команду /addbalance
+    dp.register_message_handler(
+        balance_menu,
+        commands=['addbalance']
+    )
+
     # Если пользователь нажал на inline кнопку "Баланс (50)" из wecome, callback_query_handler запустит balance_menu
     dp.register_callback_query_handler(
         balance_menu,

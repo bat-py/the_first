@@ -4,6 +4,23 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 import crypto_price
 import sql_handler
 from button_creators import *
+import random
+
+# Возврашает str типа: "BCCC-1087387"
+def gen_order_id(access_code=None):
+    if access_code:
+        gen_access_code = str(random.randint(10000000, 99999999))
+        return str(gen_access_code)
+
+    letters = [chr(i) for i in range(ord('a'), ord('z')+1)]
+
+    order_id = ''
+    for i in range(4):
+        order_id += random.choice(letters).upper()
+
+    order_number = str(random.randint(1000000, 9999999))
+
+    return order_id+'-'+order_number
 
 
 async def waiting_for_product_type(callback_query_or_message, city_id):
@@ -252,6 +269,8 @@ async def chosen_klad_type(callback_query: types.CallbackQuery):
 
     if not product_price:
         return
+    else:
+        product_price = product_price['price']
 
     # Из 1000 сделаем "1 000"
     price = str(product_price)
@@ -280,7 +299,7 @@ async def chosen_klad_type(callback_query: types.CallbackQuery):
         else:
             return
 
-        callback_date = callback_query.data + f'payment_method{str(method["id"])}'
+        callback_date = callback_query.data + f';p{str(method["id"])}'
         buttons.append([mesg, callback_date])
 
     mesg = 'Выберите способ оплаты:'
@@ -305,8 +324,120 @@ async def chosen_payment_method(callback_query: types.CallbackQuery):
     rayon_id = callback_data_list[2].replace('rayon', '')
     massa_id = callback_data_list[3].replace('massa', '')
     klad_type_id = callback_data_list[4].replace('klad_type', '')
-    payment_method = callback_data_list[5].replace('payment_method', '')
-    product_price = sql_handler.product_price(city_id, product_id, rayon_id, massa_id, klad_type_id)
+    payment_method_id = callback_data_list[5].replace('p', '')
+    product_price = sql_handler.product_price(city_id, product_id, rayon_id, massa_id, klad_type_id)['price']
+
+    price = str(product_price)
+    ready_price = price[:-3] + ' ' + price[-3:]
+
+    # Если выбрал "Оплата с баланса"
+    if payment_method_id == '1':
+        mesg = bot_mesg['insufficient_balance']
+        await callback_query.bot.send_message(callback_query.from_user.id, mesg)
+        return
+
+    # Если выбрал другие методы:
+    # Получает: {'city': 'Уфа', 'product': 'Шишки', 'rayon': 'Юматово', 'massa': '2.00gr', 'klad_type': 'Тайник'}
+    column_names = sql_handler.get_columns_name_by_id(city_id,
+                                                      product_id,
+                                                      rayon_id,
+                                                      massa_id,
+                                                      klad_type_id)
+    # Получает {'method_name'}
+    column_name_payment_method = sql_handler.get_column_name_payment_method(payment_method_id)
+
+
+    # Создаем сообшение "Информация о заказе..."
+    mesg = bot_mesg['about_order'].replace('***city***', column_names['city'])\
+                                               .replace('***rayon***', column_names['rayon'])\
+                                               .replace('***product***', column_names['product'])\
+                                               .replace('***massa***', column_names['massa'].replace('gr', ''))\
+                                               .replace('***price***', ready_price)\
+                                               .replace('***klad_type***', column_names['klad_type'])\
+                                               .replace('***paymnet_method***', column_name_payment_method['method_name'])
+
+    button = inline_keyboard_creator([['Подтвердить', callback_query.data+';confirmed']])
+
+    # Отправляем "Информация о заказе" и просим подтверждение
+    await callback_query.bot.send_message(
+        callback_query.from_user.id,
+        mesg,
+        reply_markup=button
+    )
+
+
+async def order_confirmed(callback_query: types.CallbackQuery):
+    """
+    Запустится после того как пользователь нажал на inline кнопку "Подтвердить"
+    :param callback_query:
+    :return: сообщения "Номер заказа: OPWP-1294096 ...", "Если вы передумали..."
+    Отправим сразу 2 вида кнопок: inline("Отменить пополнение баланса"), reply("Отменить пополнение", "Поддержка")
+    """
+    chat_id = callback_query.from_user.id
+    callback_data_list = callback_query.data.split(';')
+    city_id = callback_data_list[0].replace('city', '')
+    product_id = callback_data_list[1].replace('product', '')
+    rayon_id = callback_data_list[2].replace('rayon', '')
+    massa_id = callback_data_list[3].replace('massa', '')
+    klad_type_id = callback_data_list[4].replace('klad_type', '')
+    payment_method_id = callback_data_list[5].replace('p', '')
+    product_price = sql_handler.product_price(city_id, product_id, rayon_id, massa_id, klad_type_id)['price']
+    wallet_addess = sql_handler.randomly_get_wallet_address(payment_method_id)
+    order_number = gen_order_id()
+    access_code = gen_order_id(access_code=True)
+
+    #Создаем reply кнопки
+    reply_buttons = ['Отменить заказ', 'Поддержка']
+    cancel_support_buttons = reply_keyboard_creator([reply_buttons])
+
+    if payment_method_id == '2':
+        price_in_ltc = crypto_price.get_cource('ltc', product_price)
+        mesg1 = bot_mesg['number_applicatoin_to_buy_product_ltc'].replace('***order_number***', order_number)\
+                                                                 .replace('***access_code***', access_code)
+        mesg2 = price_in_ltc[1]
+        mesg3 = 'На Лайткоин адрес:'
+        mesg4 = wallet_addess
+        mesg5 = bot_mesg['warning_dont_cancel']
+
+        for mesg in mesg1, mesg2, mesg3, mesg4:
+            await callback_query.bot.send_message(chat_id, mesg)
+        await callback_query.bot.send_message(chat_id, mesg5, reply_markup=cancel_support_buttons)
+
+    elif payment_method_id == '3':
+        price_in_btc = crypto_price.get_cource('btc', product_price)
+        mesg1 = bot_mesg['number_applicatoin_to_buy_product_btc'].replace('***order_number***', order_number) \
+                                                                 .replace('***access_code***', access_code)
+        mesg2 = price_in_btc[1]
+        mesg3 = 'На Биткоин адрес:'
+        mesg4 = wallet_addess
+        mesg5 = bot_mesg['warning_dont_cancel']
+
+        for mesg in mesg1, mesg2, mesg3, mesg4:
+            await callback_query.bot.send_message(chat_id, mesg)
+        await callback_query.bot.send_message(chat_id, mesg5, reply_markup=cancel_support_buttons)
+
+    else:
+        mesg = bot_mesg['number_applicatoin_to_buy_product_card'].replace('***order_number***', order_number) \
+                                                                  .replace('***access_code***', access_code)\
+                                                                  .replace('***summa***', str(product_price))\
+                                                                  .replace('***wallet***', wallet_addess)
+        await callback_query.bot.send_message(chat_id, mesg, reply_markup=cancel_support_buttons)
+
+
+    # Добавим пользователся в базу в течении часа если пользователь попытается открыть товары или баланс
+    # он получит сообщение типа: "Необходимо отменить текущий заказ или пополнение баланса!
+    #  Если вы хотите отменить текущий заказ или пополнение, введите /cancel"
+    sql_handler.order_adder(callback_query.from_user.id, order_number, 'product_order')
+
+    wanna_cancel_text = 'Если вы передумали, и не хотите платить нажмите кнопку ниже.'
+    button_text_data = ['Отменить заказ', 'cancel_order_button']
+    wanna_cancel_button = inline_keyboard_creator([button_text_data])
+
+    await callback_query.bot.send_message(
+        callback_query.from_user.id,
+        wanna_cancel_text,
+        reply_markup=wanna_cancel_button
+    )
 
 
 def register_handlers_products(dp: Dispatcher):
@@ -352,6 +483,13 @@ def register_handlers_products(dp: Dispatcher):
     # Регистрируем обработчик который запускается после выбора метода оплаты
     dp.register_callback_query_handler(
         chosen_payment_method,
-        # Если получит callback_data как: "city20;product40;rayon60;massa20;klad_type20;payment_method10"
-        lambda c: c.data.startswith('city' and c.data.count(';') == 5)
+        # Если получит callback_data как: "city20;product40;rayon60;massa20;klad_type20;p10"
+        lambda c: c.data.startswith('city') and c.data.count(';') == 5
+    )
+
+    # Регистрируем обработчик который запускается после нажатия на кнопку Подтвердить
+    dp.register_callback_query_handler(
+        order_confirmed,
+        # Если получит callback_data как: "city20;product40;rayon60;massa20;klad_type20;p10;confirmed"
+        lambda c: c.data.startswith('city') and c.data.count(';') == 6
     )

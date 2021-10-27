@@ -94,8 +94,17 @@ def register_cancel_system_handlers(dp: Dispatcher):
         state='*'
     )
 
-    # Запустится если пользователь нажал на reply кнопку "Отменить пополнение"
+    # Запустится если пользователь нажал на inline кнопку "Отменить заказ" (cancel_order_button)
+    # Вернем сообшение "Отмена заказа XOGC-2185246..." с двумя inline кнопками  "Да" и "Нет"
+    dp.register_callback_query_handler(
+        cancel_command_handler,
+        lambda c: c.data == 'cancel_order_button',
+        state='*'
+    )
+
+
+    # Запустится если пользователь нажал на reply кнопку "Отменить пополнение" или "Отменить заказ"
     dp.register_message_handler(
         cancel_command_handler,
-        lambda message: message.text == "Отменить пополнение"
+        lambda message: message.text == "Отменить пополнение" or message.text == "Отменить заказ"
     )

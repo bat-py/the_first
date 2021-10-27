@@ -139,6 +139,7 @@ async def products_menu(message: types.Message):
 
 
 # /READY
+@dp.message_handler(commands=['support'])
 @dp.message_handler(lambda mesg: mesg.text == 'Поддержка')
 async def balance_menu(message: types.Message, state: FSMContext):
     await state.finish()

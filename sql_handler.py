@@ -411,3 +411,51 @@ def product_price(city_id, product_id, rayon_id, massa_id, klad_type_id):
 
     connection.close()
     return price
+
+
+def get_columns_name_by_id(city_id, product_id, rayon_id, massa_id, klad_type_id):
+    """
+    :param city_id:
+    :param rayon_id:
+    :param product_id:
+    :param massa_id:
+    :param klad_type_id:
+    :return: Получает id, возврашает имя этих столбцов:
+    {'city': 'Уфа', 'product': 'Шишки', 'rayon': 'Юматово', 'massa': '2.00gr', 'klad_type': 'Тайник'}
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT cities.city, products_types.type product, products_rayons.region rayon, products_massa.massa_gr massa, klad_types.type klad_type
+    FROM products
+    JOIN cities ON cities.id = products.city
+    JOIN products_types ON products_types.id = products.product
+    JOIN products_rayons ON products_rayons.id = products.rayon
+    JOIN products_massa ON products_massa.id = products.massa
+    JOIN klad_types ON klad_types.id = products.klad_type
+    WHERE products.city = %s AND products.product = %s AND products.rayon = %s 
+    AND products.massa = %s AND products.klad_type = %s
+    """,
+                   (city_id, product_id, rayon_id, massa_id, klad_type_id)
+                   )
+
+    columns_names = cursor.fetchone()
+
+    connection.close()
+    return columns_names
+
+
+def get_column_name_payment_method(payment_method_id):
+    """
+    :param payment_method_id:
+    :return: Возврашает имя метода оплаты (Лайткоин, Биткоин ...)
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT method_name FROM payment_methods WHERE id = %s", (payment_method_id, ))
+    method_name = cursor.fetchone()
+
+    connection.close()
+    return method_name
