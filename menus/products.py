@@ -52,12 +52,19 @@ async def waiting_for_product_type(callback_query_or_message, city_id):
 
     inline_keyboards = inline_keyboard_creator(products_list_list_in_city, row_width=1)
 
-    mesg = 'Выберите товар:'
-    # Отправляем список товаров который есть в выбранном городе
-    await callback_query_or_message.bot.send_message(chat_id=callback_query_or_message.from_user.id,
-                                                     text=mesg,
-                                                     reply_markup=inline_keyboards
-                                                     )
+    # Если в выбранном городе есть товары
+    if products_list_list_in_city:
+        mesg = 'Выберите товар:'
+        # Отправляем список товаров который есть в выбранном городе
+        await callback_query_or_message.bot.send_message(chat_id=callback_query_or_message.from_user.id,
+                                                         text=mesg,
+                                                         reply_markup=inline_keyboards
+                                                         )
+    else:
+        mesg = 'Товаров пока нет'
+        await callback_query_or_message.bot.send_message(chat_id=callback_query_or_message.from_user.id,
+                                                         text=mesg
+                                                         )
 
 
 async def chosen_city(callback_query: types.CallbackQuery):
