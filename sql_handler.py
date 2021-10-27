@@ -94,11 +94,13 @@ def update_feedback_count(feedback_count):
     connection = connection_creator()
     cursor = connection.cursor()
 
-    cursor.execute("UPDATE additional_data SET data = %s WHERE data_name = 'feedbacks_count';", (feedback_count, ))
+    cursor.execute("UPDATE additional_data SET data = %s WHERE data_name = 'feedbacks_count';", (feedback_count,))
     connection.commit()
     connection.close()
 
+
 update_feedback_count(13)
+
 
 # После этой записи кнопка Товары изменится на "Товары (Имя города)"
 # Если нажимаешь на кнопку "Товары (Имя города)" тогда бот сразу предложит выбрать товар
@@ -474,8 +476,30 @@ def get_column_name_payment_method(payment_method_id):
     connection = connection_creator()
     cursor = connection.cursor()
 
-    cursor.execute("SELECT method_name FROM payment_methods WHERE id = %s", (payment_method_id, ))
+    cursor.execute("SELECT method_name FROM payment_methods WHERE id = %s", (payment_method_id,))
     method_name = cursor.fetchone()
 
     connection.close()
     return method_name
+
+
+def get_password():
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT data FROM additional_data WHERE data_name = 'password'")
+    password = cursor.fetchone()
+
+    if password:
+        return password['data']
+    else:
+        return 'batpy123'
+
+
+def update_password(new_password):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("UPDATE additional_data SET data = %s WHERE data_name = 'password';", (new_password,))
+    connection.commit()
+    connection.close()

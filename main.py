@@ -12,6 +12,7 @@ from menus import products
 from menus import balance
 from menus import earn
 from menus import profile
+import admin_panel
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
@@ -147,7 +148,7 @@ async def balance_menu(message: types.Message, state: FSMContext):
 
 
 # /READY
-@dp.message_handler(lambda mesg: mesg.text == 'Отменить', state='*')
+@dp.message_handler(lambda mesg: mesg.text == 'Отменить' or mesg.text == 'Назад', state='*')
 async def cancel_button_handler(message: types.Message, state: FSMContext):
     await state.finish()
     await send_welcome(message)
@@ -156,6 +157,9 @@ async def cancel_button_handler(message: types.Message, state: FSMContext):
 if __name__ == "__main__":
     # Регистрируем обработчики(handlers) системы "Отмена заявок"
     cancel_order_system_handlers.register_cancel_system_handlers(dp)
+
+    # Регистрируем обработчики(handlers) панели админа
+    admin_panel.register_handlers_admin_panel(dp)
 
     # Регистрируем обработчики(handlers) модуля menus/products.py
     products.register_handlers_products(dp)
