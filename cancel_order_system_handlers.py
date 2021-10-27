@@ -2,9 +2,10 @@ from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 import sql_handler
 from button_creators import *
+import main
 
 
-async def start_command_handler(message_or_callback_query, state: FSMContext):
+async def cancel_command_handler(message_or_callback_query, state: FSMContext):
     """
     Запускается если пользователь отправил команду /cancel
     :param message_or_callback_query:
@@ -45,18 +46,56 @@ async def start_command_handler(message_or_callback_query, state: FSMContext):
 
 
 async def cancel_order(callback_query: types.CallbackQuery):
+    """
+    Запустится если пользователь нажал на "Да отменить пополнение..." или "Да отменить заказ..." (yes_cancel_order)
+    :param callback_query:
+    :return: main.send_welcome
+    """
+    # Удаляем все заказы пользователя из базы
     sql_handler.del_member_orders(callback_query.from_user.id)
+
+    await main.send_welcome(callback_query)
+
+
+async def no_dont_cancel_order(callback_query: types.CallbackQuery):
+    """
+    Запустится если пользователь нажал на "Нет я передумал" (no_i_changed_my_mind)
+    :param callback_query:
+    :return: Всплываюшое окно "Ок. Ждем перевод"
+    """
+    await callback_query.answer('Ок. Ждем перевод')
 
 
 def register_cancel_system_handlers(dp: Dispatcher):
     # Если пользователь отправил /cancel тогда отправит "Отмена пополнение..." или "Отмена заказа ..."
     dp.register_message_handler(
-        start_command_handler,
+        cancel_command_handler,
         commands=['cancel'],
         state='*'
     )
 
     # Запустится если пользователь нажал на inline кнопку "Да отменить пополнение" или "Да отменить заказ"
     dp.register_callback_query_handler(
+        cancel_order,
+        lambda c: c.data == 'yes_cancel_order'
+    )
 
+    # Запустится если пользователь нажал на inline кнопку "Нет, я передумал"
+    dp.register_callback_query_handler(
+        no_dont_cancel_order,
+        lambda c: c.data == 'no_i_changed_my_mind'
+    )
+
+    # Запустится если пользователь нажал на inline кнопку "Отменить пополнение баланса" (cancel_refill)
+    # Вернем сообшение "Отмена пополнения XOGC-2185246..." с двумя inline кнопками  "Да" и "Нет"
+    dp.register_callback_query_handler(
+        cancel_command_handler,
+        lambda c: c.data == 'cancel_refill_button',
+        state='*'
+    )
+
+    # Запустится если пользователь нажал на reply кнопку "Отменить пополнение"
+    dp.register_message_handler(
+        cancel_command_handler,
+        lambda message: message.text == "Отменить пополнение"
     )

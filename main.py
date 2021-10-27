@@ -49,7 +49,9 @@ async def city_menu(message, from_where):
     cities = [[i['city'], which[from_where-1]+str(i['id'])] for i in cities_list]
     ready_buttons = inline_keyboard_creator(cities)
     mesg = 'Выберите город:'
-    await message.answer(text=mesg, reply_markup=ready_buttons)
+    await message.bot.send_message(
+        message.from_user.id,
+        text=mesg, reply_markup=ready_buttons)
 
 
 # /READY
@@ -58,32 +60,40 @@ async def send_welcome(message):
     :param message:
     :return: Welcome message and main menu reply buttons
     """
-    if not sql_handler.check_user_exists(message.chat.id):
-        sql_handler.add_user(message.chat.id, message.chat.first_name)
+    if not sql_handler.check_user_exists(message.from_user.id):
+        sql_handler.add_user(message.from_user.id, message.from_user.first_name)
         print()
 
     # Sends logo image
-    await message.answer_photo(photo=open('images/logo.jpg', 'rb'))
+    await message.bot.send_photo(
+        message.from_user.id,
+        photo=open('images/logo.jpg', 'rb'))
 
     # Sends Welcome Message with two inline
-    balance = sql_handler.get_balance(message.chat.id)
+    balance = sql_handler.get_balance(message.from_user.id)
     balance_mesg = f'Баланс ({balance})'
     bot_support = 'https://t.me/iso_support_bot'
     gen_inline_keyboard_buttons = inline_keyboard_creator([ [balance_mesg, 'balance'],
                                                             [bot_mesg['bot_support'], bot_support]
                                                           ])
-    await message.answer(bot_mesg['welcome'], parse_mode='html', reply_markup=gen_inline_keyboard_buttons)
+    await message.bot.send_message(
+        message.from_user.id,
+        bot_mesg['welcome'], parse_mode='html', reply_markup=gen_inline_keyboard_buttons)
 
     # Good luck and main menu reply keyboards
-    buttons = main_menu_buttons(message.chat.id)
-    await message.answer('Удачных покупок!', reply_markup=buttons)
+    buttons = main_menu_buttons(message.from_user.id)
+    await message.bot.send_message(
+        message.from_user.id,
+        'Удачных покупок!', reply_markup=buttons)
 
     # Если до этого получил 50р по реф. коду, тогда этого сообщения не будет
     if not balance:
         # Do you wan't referral code?  inlinekeyboard: show referral code
         referral_code = inline_keyboard_creator([ ['Ввести реферальный код', 'referral_code'] ])
-        await message.answer('Хотите ввести код реферала? После ввода кода реферала на ваш баланс будет начислено 50 руб',
-                             reply_markup=referral_code)
+        await message.bot.send_message(
+            message.from_user.id,
+            'Хотите ввести код реферала? После ввода кода реферала на ваш баланс будет начислено 50 руб',
+            reply_markup=referral_code)
 
     # Sends message("Выберите город:") to member with InlineKeyboards
     await city_menu(message, 1)

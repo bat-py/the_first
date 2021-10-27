@@ -283,7 +283,7 @@ def get_aviable_klads_type(city_id, product_id, rayon_id, masssa_id):
     SELECT products.klad_type klad_id, klad_types.type klad_name 
     FROM products 
     JOIN klad_types ON klad_type = klad_types.id
-    WHERE city = %s AND product = %s AND rayon = %s AND massa = %s;
+    WHERE city = %s AND product = %s AND rayon = %s AND massa = %s AND status = 1;
     """,
                    (city_id, product_id, rayon_id, masssa_id)
                    )
@@ -371,7 +371,7 @@ def check_member_order_exist(chat_id):
     SELECT * FROM active_orders WHERE date_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR) AND
     chat_id = %s ORDER BY id DESC;
     """,
-                   (chat_id, )
+                   (chat_id,)
                    )
     order_number = cursor.fetchone()
 
@@ -383,6 +383,31 @@ def del_member_orders(chat_id):
     connection = connection_creator()
     cursor = connection.cursor()
 
-    cursor.execute("DELETE FROM active_orders WHERE chat_id = %s", (chat_id, ))
+    cursor.execute("DELETE FROM active_orders WHERE chat_id = %s", (chat_id,))
+    connection.commit()
 
     connection.close()
+
+
+def product_price(city_id, product_id, rayon_id, massa_id, klad_type_id):
+    """
+    :param city_id:
+    :param product_id:
+    :param rayon_id:
+    :param massa_id:
+    :param klad_type_id:
+    :return: Вернет {'price'}
+    """
+
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("""
+    SELECT price FROM products
+    WHERE city = %s AND product = %s AND rayon = %s AND massa = %s AND klad_type = %s AND status = 1;
+    """,
+                   (city_id, product_id, rayon_id, massa_id, klad_type_id))
+    price = cursor.fetchone()
+
+    connection.close()
+    return price

@@ -50,7 +50,7 @@ async def datasheets_menu(message: types.Message):
 
     inline_buttons = types.InlineKeyboardMarkup(row_width=2)
     for datasheet in datasheets_list:
-        inline_buttons.add(InlineKeyboardButton(datasheet, callback_data='datasheet_name'+datasheet))
+        inline_buttons.add(InlineKeyboardButton(datasheet, callback_data='x'+datasheet))
 # callback_data='datasheet_dISDIASL'
     mesg = "Список даташитов:"
 

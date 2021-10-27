@@ -115,6 +115,8 @@ async def payment_method_chosen(callback_query: types.CallbackQuery, state: FSMC
     Отправим сразу 2 вида кнопок: inline("Отменить пополнение баланса"), reply("Отменить пополнение", "Поддержка")
     """
     datas = await state.get_data()
+    # Останавливаем state чтобы дальне он нам не мешал
+    await state.finish()
 
     # Получаем рандомно адрес кашелько по выбранному типу
     wallet_address = sql_handler.randomly_get_wallet_address(callback_query.data)
@@ -187,7 +189,7 @@ async def payment_method_chosen(callback_query: types.CallbackQuery, state: FSMC
     sql_handler.order_adder(callback_query.from_user.id, order_number, 'refill')
 
     wanna_cancel_text = 'Если вы передумали, и не хотите платить нажмите кнопку ниже.'
-    button_text_data = ['Отменить пополнение баланса', 'cancel_refill']
+    button_text_data = ['Отменить пополнение баланса', 'cancel_refill_button']
     wanna_cancel_button = inline_keyboard_creator([button_text_data])
 
     await callback_query.bot.send_message(

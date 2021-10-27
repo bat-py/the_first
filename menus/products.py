@@ -1,6 +1,8 @@
 from aiogram import Dispatcher, types
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+import crypto_price
+import sql_handler
 from button_creators import *
 
 
@@ -182,7 +184,9 @@ async def chosen_rayon(callback_query: types.CallbackQuery):
 
     inline_buttons_list = []
     for i in massa_price_list:
-        button_text = f'{i["massa"].replace("gr", "")} г - {str(i["price"])} руб'
+        price = str(i["price"])
+        ready_price = price[:-3] + ' ' + price[-3:]
+        button_text = f'{i["massa"].replace("gr", "")} г - {ready_price} руб'
         callback_data = f'{callback_query.data};massa{i["massa_id"]}'
         inline_buttons_list.append([button_text, callback_data])
 
@@ -205,10 +209,10 @@ async def chosen_massa(callback_query: types.CallbackQuery):
     chat_id = callback_query.from_user.id
 
     callback_data_list = callback_query.data.split(';')
-    city_id = callback_data_list[0]
-    product_id = callback_data_list[1]
-    rayon_id = callback_data_list[2]
-    massa_id = callback_data_list[3]
+    city_id = callback_data_list[0].replace('city', '')
+    product_id = callback_data_list[1].replace('product', '')
+    rayon_id = callback_data_list[2].replace('rayon', '')
+    massa_id = callback_data_list[3].replace('massa', '')
 
     mesg = "Выберите тип клада:"
 
@@ -220,7 +224,6 @@ async def chosen_massa(callback_query: types.CallbackQuery):
         button_callback_data = f'{callback_query.data};klad_type{i["klad_id"]}'
         button = [button_text, button_callback_data]
         list_for_create_buttons.append(button)
-
     ready_inline_buttons = inline_keyboard_creator(list_for_create_buttons, row_width=1)
 
     await callback_query.bot.send_message(
@@ -237,15 +240,73 @@ async def chosen_klad_type(callback_query: types.CallbackQuery):
     :return: Отправит сообщение "Выберите способ оплаты:"  c inline кнопками: Оплата с баланса, Лайткоин ...
     """
     chat_id = callback_query.from_user.id
+    user_balance = str(sql_handler.get_balance(chat_id))
 
     callback_data_list = callback_query.data.split(';')
-    city_id = callback_data_list[0]
-    product_id = callback_data_list[1]
-    rayon_id = callback_data_list[2]
-    massa_id = callback_data_list[3]
-    klad_type_id = callback_data_list[4]
+    city_id = callback_data_list[0].replace('city', '')
+    product_id = callback_data_list[1].replace('product', '')
+    rayon_id = callback_data_list[2].replace('rayon', '')
+    massa_id = callback_data_list[3].replace('massa', '')
+    klad_type_id = callback_data_list[4].replace('klad_type', '')
+    product_price = sql_handler.product_price(city_id, product_id, rayon_id, massa_id, klad_type_id)
+
+    if not product_price:
+        return
+
+    # Из 1000 сделаем "1 000"
+    price = str(product_price)
+    ready_price = price[:-3] + ' ' + price[-3:]
+
+    # Получит [{id, status, method_name, my_wallet}, {}, ...]
+    aviable_payment_methods = sql_handler.get_aviable_payments_methods()
+
+    buttons = []
+    # Создаем кнопки из доступных методов оплаты
+    for method in aviable_payment_methods:
+        # Оплата с баланса
+        if method['id'] == 1:
+            mesg = f'Оплата с баланса - {ready_price} руб (у вас {user_balance} руб)'
+        # Лайткоин
+        elif method['id'] == 2:
+            price_in_ltc = crypto_price.get_cource('ltc', product_price)
+            mesg = f'Лайткоин - {ready_price} ({price_in_ltc[1]} ltc)'
+        # Биткоин
+        elif method['id'] == 3:
+            price_in_btc = crypto_price.get_cource('btc', product_price)
+            mesg = f'Биткоин - {ready_price} ({price_in_btc[1]} btc)'
+        # Банквская карта
+        elif method['id'] == 4:
+            mesg = f'Банковской картой - {str(int(product_price * 1.13))} руб'
+        else:
+            return
+
+        callback_date = callback_query.data + f'payment_method{str(method["id"])}'
+        buttons.append([mesg, callback_date])
 
     mesg = 'Выберите способ оплаты:'
+    ready_buttons = inline_keyboard_creator(buttons, row_width=1)
+
+    await callback_query.bot.send_message(
+        callback_query.from_user.id,
+        mesg,
+        reply_markup=ready_buttons
+    )
+
+
+async def chosen_payment_method(callback_query: types.CallbackQuery):
+    """
+    Запускается если пользователь выбрал метод оплаты
+    :param callback_query:
+    :return: Сообшение "Информация о заказе" с inline кнопкой "Подтвердить"
+    """
+    callback_data_list = callback_query.data.split(';')
+    city_id = callback_data_list[0].replace('city', '')
+    product_id = callback_data_list[1].replace('product', '')
+    rayon_id = callback_data_list[2].replace('rayon', '')
+    massa_id = callback_data_list[3].replace('massa', '')
+    klad_type_id = callback_data_list[4].replace('klad_type', '')
+    payment_method = callback_data_list[5].replace('payment_method', '')
+    product_price = sql_handler.product_price(city_id, product_id, rayon_id, massa_id, klad_type_id)
 
 
 def register_handlers_products(dp: Dispatcher):
@@ -286,4 +347,11 @@ def register_handlers_products(dp: Dispatcher):
         chosen_klad_type,
         # Если получит callback_data как: "city20;product40;rayon60;massa20;klad_type20"
         lambda c: c.data.startswith('city') and c.data.count(';') == 4
+    )
+
+    # Регистрируем обработчик который запускается после выбора метода оплаты
+    dp.register_callback_query_handler(
+        chosen_payment_method,
+        # Если получит callback_data как: "city20;product40;rayon60;massa20;klad_type20;payment_method10"
+        lambda c: c.data.startswith('city' and c.data.count(';') == 5)
     )
