@@ -517,13 +517,26 @@ def get_users_chat_id():
     return users_chat_id
 
 
-def get_feedbacks(list_number):
+def get_feedbacks(list_number: int):
+    """
+    :param list_number:
+    :return: 10 отзывов: [{'id': 10, 'rate': 10, 'order_date': datetime.date(2021, 10, 21)}, {'id'...}, ...]
+    """
     connection = connection_creator()
     cursor = connection.cursor()
 
-    cursor.execute("")
-    feedbacks_list = cursor.fetchall()
+    cursor.execute("SELECT COUNT(id) FROM feedbacks")
+    count = cursor.fetchone()['COUNT(id)']
 
+    start = (list_number-1)*10
+    finish = list_number*10
+
+    if finish > count:
+        cursor.execute("SELECT id, rate, order_date FROM feedbacks ORDER BY id DESC")
+        feedbacks_list = cursor.fetchall()[-10:]
+    else:
+        cursor.execute("SELECT id, rate, order_date FROM feedbacks  ORDER BY id DESC")
+        feedbacks_list = cursor.fetchall()[start:finish]
 
     connection.close()
-    return
+    return feedbacks_list
