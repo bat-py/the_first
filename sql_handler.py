@@ -503,3 +503,16 @@ def update_password(new_password):
     cursor.execute("UPDATE additional_data SET data = %s WHERE data_name = 'password';", (new_password,))
     connection.commit()
     connection.close()
+
+
+def get_users_chat_id():
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT id FROM users;")
+    users_chat_id_dict = cursor.fetchall()
+    users_chat_id = [i['id'] for i in users_chat_id_dict]
+
+    connection.close()
+    return users_chat_id
+
