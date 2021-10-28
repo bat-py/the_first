@@ -540,3 +540,18 @@ def get_feedbacks(list_number: int):
 
     connection.close()
     return feedbacks_list
+
+
+def get_feedback_by_id(feedback_id):
+    """
+    :param feedback_id:
+    :return: {'id': 1, 'order_date': datetime.date(2021, 10, 21), 'customer_name': '@hjikogfg', 'rate': 9, 'feedback_text': 'Отличный товар'}
+    """
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT * FROM feedbacks WHERE id = %s", (feedback_id, ))
+    feedback_data = cursor.fetchone()
+
+    connection.close()
+    return feedback_data

@@ -13,6 +13,7 @@ from menus import balance
 from menus import earn
 from menus import profile
 import admin_panel
+from menus import feedbacks
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
@@ -134,11 +135,6 @@ async def products_menu(message: types.Message):
         await city_menu(message, from_where=2)
 
 
-@dp.message_handler(lambda mesg: mesg.text.startswith('Отзывы'))
-async def products_menu(message: types.Message):
-    pass
-
-
 # /READY
 @dp.message_handler(commands=['support'])
 @dp.message_handler(lambda mesg: mesg.text == 'Поддержка')
@@ -154,6 +150,11 @@ async def cancel_button_handler(message: types.Message, state: FSMContext):
     await send_welcome(message)
 
 
+# /READY
+async def i_dont_understant(message: types.Message):
+    await message.answer('Я не понял вашу команду, нажмите /start')
+
+
 if __name__ == "__main__":
     # Регистрируем обработчики(handlers) системы "Отмена заявок"
     cancel_order_system_handlers.register_cancel_system_handlers(dp)
@@ -164,14 +165,21 @@ if __name__ == "__main__":
     # Регистрируем обработчики(handlers) модуля menus/products.py
     products.register_handlers_products(dp)
 
+    # Регистрируем обработичи(handlers) модуля menus/profile.py
+    profile.register_handlers_profile(dp)
+
     # Регистрируем обработичи(handlers) модуля menus/balance.py
     balance.register_handlers_balance(dp)
+
+    # Регистрируем обработичи(handlers) модуля menus/feedbacks.py
+    feedbacks.register_handlers_products(dp)
 
     # Регистрируем обработичи(handlers) модуля menus/earn.py
     earn.register_handlers_earn(dp)
 
-    # Регистрируем обработичи(handlers) модуля menus/profile.py
-    profile.register_handlers_profile(dp)
+    dp.register_message_handler(
+        i_dont_understant
+    )
 
     executor.start_polling(dp, skip_updates=True)
 
