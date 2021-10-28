@@ -18,7 +18,6 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 API_TOKEN = sql_handler.get_bot_api()
-print(API_TOKEN)
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
