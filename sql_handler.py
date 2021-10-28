@@ -516,3 +516,14 @@ def get_users_chat_id():
     connection.close()
     return users_chat_id
 
+
+def get_feedbacks(list_number):
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("")
+    feedbacks_list = cursor.fetchall()
+
+
+    connection.close()
+    return
