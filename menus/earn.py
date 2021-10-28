@@ -13,6 +13,9 @@ async def earn_menu(message_or_callback_query):
     :return: Сперва отправит сообщение "Ваш код реферала: SSYLP8T",
     потом "Вы можете заработать приглашая покупателей." c inline кнопкой "Подробнее"
     """
+    if not sql_handler.check_user_exists(message_or_callback_query.from_user.id):
+        return
+
     # Если пользователь за последный час открыл заявку на попол или покупку, тогда отправим "Необходимо отменить тек..."
     check_member_order_exist = sql_handler.check_member_order_exist(message_or_callback_query.from_user.id)
     if check_member_order_exist:

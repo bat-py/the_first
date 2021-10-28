@@ -17,9 +17,8 @@ from menus import feedbacks
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
-#API_TOKEN = '1018761895:AAE9zGMHZxYZlC_6kyRLAmTBC0Oubpp-QUQ'
-API_TOKEN = '1559565040:AAG97C16gpMUk4cZgElzGspPb8uplSCX0Ss'
-
+API_TOKEN = sql_handler.get_bot_api()
+print(API_TOKEN)
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -63,8 +62,7 @@ async def send_welcome(message):
     :return: Welcome message and main menu reply buttons
     """
     if not sql_handler.check_user_exists(message.from_user.id):
-        sql_handler.add_user(message.from_user.id, message.from_user.first_name)
-        print()
+        return
 
     # Sends logo image
     await message.bot.send_photo(
@@ -105,6 +103,9 @@ async def send_welcome(message):
 # Command "/start" handler
 @dp.message_handler(commands=['start'], state='*')
 async def start_command_handler(message: types.Message, state: FSMContext):
+    if not sql_handler.check_user_exists(message.from_user.id):
+        return
+
     await state.finish()
     await send_welcome(message)
 
@@ -112,6 +113,9 @@ async def start_command_handler(message: types.Message, state: FSMContext):
 # /READY
 @dp.message_handler(lambda mesg: mesg.text == 'Локации')
 async def cities_menu(message: types.Message):
+    if not sql_handler.check_user_exists(message.from_user.id):
+        return
+
     # Sends message("Выберите город:") to member with InlineKeyboards
     await city_menu(message, from_where=2)
 
@@ -123,6 +127,8 @@ async def products_menu(message: types.Message):
     :param message:
     :return:
     """
+    if not sql_handler.check_user_exists(message.from_user.id):
+        return
 
     # Проверим пользователь до этого сохранил ли кокой-нибудь город. Ну короче если кнопка выглядит так "Товары (Уфа)"
     user_city = sql_handler.get_user_city(message.chat.id)
@@ -139,6 +145,9 @@ async def products_menu(message: types.Message):
 @dp.message_handler(commands=['support'])
 @dp.message_handler(lambda mesg: mesg.text == 'Поддержка')
 async def balance_menu(message: types.Message, state: FSMContext):
+    if not sql_handler.check_user_exists(message.from_user.id):
+        return
+
     await state.finish()
     await message.answer(bot_mesg['support_menu'])
 
@@ -146,12 +155,18 @@ async def balance_menu(message: types.Message, state: FSMContext):
 # /READY
 @dp.message_handler(lambda mesg: mesg.text == 'Отменить' or mesg.text == 'Назад', state='*')
 async def cancel_button_handler(message: types.Message, state: FSMContext):
+    if not sql_handler.check_user_exists(message.from_user.id):
+        return
+
     await state.finish()
     await send_welcome(message)
 
 
 # /READY
 async def i_dont_understant(message: types.Message):
+    if not sql_handler.check_user_exists(message.from_user.id):
+        return
+
     await message.answer('Я не понял вашу команду, нажмите /start')
 
 

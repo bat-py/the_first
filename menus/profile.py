@@ -14,6 +14,9 @@ class ProfileMenuStates(StatesGroup):
 
 
 async def profile_menu(message: types.Message):
+    if not sql_handler.check_user_exists(message.from_user.id):
+        return
+
     # Если пользователь за последный час открыл заявку на попол или покупку, тогда отправим "Необходимо отменить тек..."
     check_member_order_exist = sql_handler.check_member_order_exist(message.from_user.id)
 

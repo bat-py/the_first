@@ -14,6 +14,8 @@ async def feedback_count_button_handler(message: types.Message):
     :param message:
     :return: Последные 10 отзывов + пнопка вперед. Все это с помощью inline кнопок
     """
+    if not sql_handler.check_user_exists(message.from_user.id):
+        return
 
     feedbacks_count = sql_handler.get_feedback_count()
     mesg = f'Всего отзывов: {feedbacks_count}'

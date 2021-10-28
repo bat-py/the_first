@@ -16,6 +16,17 @@ def connection_creator():
     return connect
 
 
+def get_bot_api():
+    connection = connection_creator()
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT data FROM additional_data WHERE data_name = 'bot_api_token'")
+    api_bot = cursor.fetchone()
+
+    connection.close()
+    return api_bot['data']
+
+
 def get_cities_list():
     """
     :return: List with dicts like:  [ {'id': 10, 'city': 'Уфа'}, {'id': 20, 'city': 'Челябинск'}, ... ]
@@ -97,9 +108,6 @@ def update_feedback_count(feedback_count):
     cursor.execute("UPDATE additional_data SET data = %s WHERE data_name = 'feedbacks_count';", (feedback_count,))
     connection.commit()
     connection.close()
-
-
-update_feedback_count(13)
 
 
 # После этой записи кнопка Товары изменится на "Товары (Имя города)"
