@@ -8,9 +8,9 @@ app = Client("my_account")
 # SQL handlers
 def connection_creator():
     connect = pymysql.connect(
-        host='archlinux.uz',
-        user='crow',
-        password='ifuckyou',
+        host='localhost',
+        user='futurist',
+        password='futurist',
         db='the_first',
         charset='utf8mb4',
         cursorclass=DictCursor
